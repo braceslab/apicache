@@ -5,6 +5,7 @@ const Storage = require('./Storage')
 class Memory extends Storage {
   constructor () {
     super()
+    this.type = 'memory'
     this.cache = new Map()
   }
 

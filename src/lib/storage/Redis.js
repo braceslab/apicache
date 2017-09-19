@@ -8,6 +8,8 @@ const async = require('async')
 class Redis extends Storage {
   constructor (options) {
     super()
+    this.type = 'redis'
+
     if (!options.client) {
       utils.debug('[apicache] error in redis init')
       throw Error(options.client + ' is not a valid Redis client')

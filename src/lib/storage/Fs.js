@@ -15,6 +15,8 @@ log.set({
 class Fs extends Storage {
   constructor (options) {
     super()
+    this.type = 'fs'
+
     if (!options.cwd) {
       log.error('apicache-fs', 'constructor', 'missing options: cwd')
       throw Error(options.cwd + ' is not a valid path')

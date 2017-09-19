@@ -2,7 +2,7 @@
 
 const url = require('url')
 const pkg = require('../package.json')
-const storage = require('./lib/storage')
+const MemoryStorage = require('./lib/storage/Memory')
 const utils = require('./lib/utils')
 
 const t = {
@@ -19,10 +19,12 @@ const t = {
 const instances = []
 
 function ApiCache () {
-  let store = new storage.Memory()
+  const instance = this
+  const middlewareOptions = []
+  let index
+  let store = new MemoryStorage()
 
   const globalOptions = {
-    store: {type: 'memory', options: null},
     debug: false,
     defaultDuration: 3600000,
     enabled: true,
@@ -40,10 +42,6 @@ function ApiCache () {
     }
   }
   utils._debug = globalOptions.debug
-
-  const middlewareOptions = []
-  const instance = this
-  let index = null
 
   instances.push(this)
   this.id = instances.length
@@ -160,7 +158,7 @@ function ApiCache () {
   function sendCachedResponse (response, cacheObject) {
     const headers = (typeof response.getHeaders === 'function') ? response.getHeaders() : response._headers
     Object.assign(headers, cacheObject.headers || {}, {
-      'apicache-store': globalOptions.store,
+      'apicache-store': store.type,
       'apicache-version': pkg.version
     })
 
@@ -183,16 +181,8 @@ function ApiCache () {
     const debugEnv = process.env.DEBUG && process.env.DEBUG.split(',').indexOf('apicache') !== -1
     utils._debug = globalOptions.debug || debugEnv
 
-    switch (globalOptions.store.type) {
-      case 'fs':
-        store = new storage.Fs(globalOptions.store.options)
-        break
-      case 'redis':
-        store = new storage.Redis(globalOptions.store.options)
-        break
-      default:
-        store = new storage.Memory()
-        break
+    if (globalOptions.store) {
+      store = globalOptions.store
     }
   }
 

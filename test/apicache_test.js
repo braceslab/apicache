@@ -9,6 +9,9 @@ var b = apicache.clone()
 var c = apicache.clone()
 var movies = require('./api/lib/data.json')
 
+const RedisStorage = require('./lib/storage/Redis')
+const FsStorage = require('./lib/storage/Fs')
+
 var apis = [
   { name: 'express', server: require('./api/express') },
   { name: 'express+gzip', server: require('./api/express-gzip') },
@@ -159,7 +162,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'test' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: [] },
         events: { expire: undefined },
         headers: {}
@@ -170,7 +172,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'test' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: [] },
         events: { expire: undefined },
         headers: {}
@@ -204,7 +205,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'bar' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: ['400'] },
         events: { expire: undefined },
         headers: {
@@ -217,7 +217,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'foo' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: ['200'] },
         events: { expire: undefined },
         headers: {}
@@ -247,7 +246,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'foo' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: ['400'] },
         events: { expire: undefined },
         headers: {}
@@ -258,7 +256,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'foo' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: ['200'] },
         events: { expire: undefined },
         headers: {}
@@ -297,7 +294,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: true,
         appendKey: [ 'foo' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: [] },
         events: { expire: undefined },
         headers: {
@@ -310,7 +306,6 @@ describe('.middleware {MIDDLEWARE}', function() {
         enabled: false,
         appendKey: [ 'foo' ],
         jsonp: false,
-        redisClient: false,
         statusCodes: { include: [], exclude: [] },
         events: { expire: undefined },
         headers: {}
@@ -632,7 +627,7 @@ describe('Redis support', function() {
 
       it('properly caches a request', function() {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', { redisClient: db })
+        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
 
         return request(app)
           .get('/api/movies')
@@ -657,7 +652,7 @@ describe('Redis support', function() {
 
       it('can clear indexed cache groups', function() {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', { redisClient: db })
+        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
 
         return request(app)
           .get('/api/testcachegroup')
@@ -673,7 +668,7 @@ describe('Redis support', function() {
 
       it('can clear indexed entries by url/key (non-group)', function() {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', { redisClient: db })
+        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
 
        return request(app)
           .get('/api/movies')
@@ -687,7 +682,7 @@ describe('Redis support', function() {
 
       it('can clear all entries from index', function() {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', { redisClient: db })
+        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
         expect(app.apicache.clear().all.length).to.equal(0)
@@ -703,7 +698,7 @@ describe('Redis support', function() {
       })
 
       it('sends a response even if redis failure', function() {
-        var app = mockAPI.create('10 seconds', { redisClient: {} })
+        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: null})})
 
         return request(app)
           .get('/api/movies')

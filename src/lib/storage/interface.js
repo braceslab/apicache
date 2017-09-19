@@ -1,6 +1,10 @@
 'use strict'
 
 class Storage {
+  constructor () {
+    this.type = 'none'
+  }
+
   get (key) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .get method')
