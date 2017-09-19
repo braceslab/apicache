@@ -3,23 +3,27 @@
 const Storage = require('./Storage')
 const utils = require('../utils')
 
+const async = require('async')
+
 class Redis extends Storage {
-  super (options) {
+  constructor (options) {
+    super()
     if (!options.client) {
       utils.debug('[apicache] error in redis init')
       throw Error(options.client + ' is not a valid Redis client')
     }
     this.client = options.client
   }
-  
+
   get (key) {
+    const _this = this
     return new Promise((resolve, reject) => {
-      this.client.hgetall(key, function (err, obj) {
+      _this.client.hgetall(key, (err, entry) => {
         if (err) {
           return reject(err)
         }
-        if (obj) {
-          return resolve(JSON.parse(obj.response))
+        if (entry) {
+          return resolve(JSON.parse(entry.response))
         }
         resolve()
       })
@@ -27,36 +31,48 @@ class Redis extends Storage {
   }
 
   set (key, value, duration, expireCallback) {
+    const _this = this
     return new Promise((resolve, reject) => {
       try {
-        this.client.hset(key, 'response', JSON.stringify(value))
-        this.client.hset(key, 'duration', duration)
-        this.client.expire(key, duration / 1000, expireCallback)
+        _this.client.hset(key, 'response', JSON.stringify(value))
+        _this.client.hset(key, 'duration', duration)
+        _this.client.expire(key, duration / 1000, expireCallback)
+        resolve()
       } catch (err) {
         utils.debug('[apicache] error in redis.hset()')
+        reject(err)
       }
     })
   }
 
   delete (key) {
+    const _this = this
     return new Promise((resolve, reject) => {
       try {
-        this.client.del(key)
+        _this.client.del(key)
+        resolve()
       } catch (err) {
-        throw Error('[apicache] error in redis.del("' + key + '"")')
+        utils.debug('[apicache] error in redis.del("' + key + '"")')
+        reject(err)
       }
     })
   }
 
   clear (entries) {
+    const _this = this
     return new Promise((resolve, reject) => {
       // clear redis keys one by one from internal index to prevent clearing non-apicache entries
-      entries.forEach(function (key) {
-        try {
-          this.client.del(key)
-        } catch (err) {
-          throw Error('[apicache] error in redis.del("' + key + '"")')
+      const deletes = []
+      entries.forEach((key) => {
+        deletes.push(_this.client.del(key))
+      })
+
+      async.parallel(deletes, (err) => {
+        if (err) {
+          utils.debug('[apicache] error in redis clear')
+          return reject(err)
         }
+        resolve()
       })
     })
   }

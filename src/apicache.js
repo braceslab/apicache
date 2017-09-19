@@ -196,47 +196,70 @@ function ApiCache () {
     }
   }
 
-  this.clear = function (target, isAutomatic) {
-    const group = index.groups[target]
-
-    if (group) {
+  function clearGroup (target, auto) {
+    return new Promise((resolve, reject) => {
+      const group = index.groups[target]
       utils.debug('clearing group "' + target + '"')
 
-      // @todo promise
+      const deletes = []
       group.forEach(function (key) {
         utils.debug('clearing cached entry for "' + key + '"')
-        store.delete(key)
+        deletes.push(store.delete(key))
         index.all = index.all.filter(utils.doesntMatch(key))
       })
+      Promise.all(deletes)
+        .then(() => {
+          delete index.groups[target]
+        })
+        .then(resolve)
+        .catch(reject)
+    })
+  }
 
-      delete index.groups[target]
-    } else if (target) {
-      utils.debug('clearing ' + (isAutomatic ? 'expired' : 'cached') + ' entry for "' + target + '"')
+  function clearEntry (target, auto) {
+    return new Promise((resolve, reject) => {
+      utils.debug('clearing ' + (auto ? 'expired' : 'cached') + ' entry for "' + target + '"')
 
       // clear actual cached entry
-      // @todo promise
       store.delete(target)
+        .then(() => {
+          // remove from global index
+          index.all = index.all.filter(utils.doesntMatch(target))
 
-      // remove from global index
-      index.all = index.all.filter(utils.doesntMatch(target))
+          // remove target from each group that it may exist in
+          Object.keys(index.groups).forEach(function (groupName) {
+            index.groups[groupName] = index.groups[groupName].filter(utils.doesntMatch(target))
 
-      // remove target from each group that it may exist in
-      Object.keys(index.groups).forEach(function (groupName) {
-        index.groups[groupName] = index.groups[groupName].filter(utils.doesntMatch(target))
+            // delete group if now empty
+            if (!index.groups[groupName].length) {
+              delete index.groups[groupName]
+            }
+          })
+        })
+        .then(resolve)
+        .catch(reject)
+    })
+  }
 
-        // delete group if now empty
-        if (!index.groups[groupName].length) {
-          delete index.groups[groupName]
-        }
-      })
-    } else {
+  function clearAll () {
+    return new Promise((resolve, reject) => {
       utils.debug('clearing entire index')
-      // @todo promise
       store.clear(index.all)
-      this.resetIndex()
-    }
+        .then(() => {
+          this.resetIndex()
+        })
+        .then(resolve)
+        .catch(reject)
+    })
+  }
 
-    return this.getIndex()
+  this.clear = function (target, auto) {
+    if (index.groups[target]) {
+      return clearGroup(target, auto)
+    } else if (target) {
+      return clearEntry(target, auto)
+    }
+    return clearAll()
   }
 
   this.getDuration = function (duration) {

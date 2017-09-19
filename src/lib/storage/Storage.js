@@ -8,7 +8,7 @@ class Storage {
     })
   }
 
-  set (key, value, time, timeoutCallback) {
+  set (key, value, duration, timeoutCallback) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .set method')
       reject(new Error('storage.set method to be implemented'))
