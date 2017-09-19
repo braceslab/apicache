@@ -9,8 +9,8 @@ var b = apicache.clone()
 var c = apicache.clone()
 var movies = require('./api/lib/data.json')
 
-const RedisStorage = require('./lib/storage/Redis')
-const FsStorage = require('./lib/storage/Fs')
+const RedisStorage = require('../src/lib/storage/Redis')
+const FsStorage = require('../src/lib/storage/Fs')
 
 var apis = [
   { name: 'express', server: require('./api/express') },
@@ -660,7 +660,10 @@ describe('Redis support', function() {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
             expect(app.apicache.getIndex().groups.cachegroup.length).to.equal(1)
-            expect(Object.keys(app.apicache.clear('cachegroup').groups).length).to.equal(0)
+            return app.apicache.clear('cachegroup')
+          })
+          .then(() => {
+            expect(Object.keys(app.apicache.getIndex().groups).length).to.equal(0)
             expect(app.apicache.getIndex().all.length).to.equal(0)
             return hgetallIsNull(db, '/api/testcachegroup')
           })
@@ -675,7 +678,10 @@ describe('Redis support', function() {
           .then(function(res) {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
-            expect(app.apicache.clear('/api/movies').all.length).to.equal(0)
+            return app.apicache.clear('/api/movies')
+          })
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
             return hgetallIsNull(db, '/api/movies')
           })
       })
@@ -685,18 +691,22 @@ describe('Redis support', function() {
         var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
-        expect(app.apicache.clear().all.length).to.equal(0)
-
-        return request(app)
-          .get('/api/movies')
+        app.apicache.clear()
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
+            return request(app).get('/api/movies')
+          })
           .then(function(res) {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
-            expect(app.apicache.clear().all.length).to.equal(0)
+            return app.apicache.clear()
+          })
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
             return hgetallIsNull(db, '/api/movies')
           })
       })
-
+        
       it('sends a response even if redis failure', function() {
         var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: null})})
 
@@ -728,7 +738,10 @@ describe('.clear(key?) {SETTER}', function() {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
             expect(app.apicache.getIndex().groups.cachegroup.length).to.equal(1)
-            expect(Object.keys(app.apicache.clear('cachegroup').groups).length).to.equal(0)
+            return app.apicache.clear('cachegroup')
+          })
+          .then(() => {
+            expect(Object.keys(app.apicache.getIndex().groups).length).to.equal(0)
             expect(app.apicache.getIndex().all.length).to.equal(0)
           })
       })
@@ -741,9 +754,12 @@ describe('.clear(key?) {SETTER}', function() {
           .then(function(res) {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
-            expect(app.apicache.clear('/api/movies').all.length).to.equal(0)
+            return app.apicache.clear('/api/movies')
           })
-      })
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
+          })
+        })
 
       it('clears empty group after removing last specific endpoint', function() {
         var app = mockAPI.create('10 seconds')
@@ -754,7 +770,10 @@ describe('.clear(key?) {SETTER}', function() {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
             expect(app.apicache.getIndex().groups.cachegroup.length).to.equal(1)
-            expect(Object.keys(app.apicache.clear('/api/testcachegroup').groups).length).to.equal(0)
+            return app.apicache.clear('/api/testcachegroup')
+          })
+          .then(() => {
+            expect(Object.keys(app.apicache.getIndex().groups).length).to.equal(0)
             expect(app.apicache.getIndex().all.length).to.equal(0)
           })
       })
@@ -763,16 +782,20 @@ describe('.clear(key?) {SETTER}', function() {
         var app = mockAPI.create('10 seconds')
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
-        expect(app.apicache.clear().all.length).to.equal(0)
-        return request(app)
-          .get('/api/movies')
+        app.apicache.clear()
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
+            return request(app).get('/api/movies')
+          })
           .then(function(res) {
             expect(app.requestsProcessed).to.equal(1)
             expect(app.apicache.getIndex().all.length).to.equal(1)
-            expect(app.apicache.clear().all.length).to.equal(0)
+            return app.apicache.clear()
+          })
+          .then(() => {
+            expect(app.apicache.getIndex().all.length).to.equal(0)
           })
       })
-
     })
   })
 })

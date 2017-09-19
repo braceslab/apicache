@@ -87,6 +87,9 @@ function ApiCache () {
           instance.clear(key, true)
         }, Math.min(duration, t.max))
       })
+      .catch((err) => {
+        utils.debug('[apicache] cacheResponse error', err)
+      })
   }
 
   function accumulateContent (res, content) {
@@ -156,7 +159,7 @@ function ApiCache () {
   }
 
   function sendCachedResponse (response, cacheObject) {
-    const headers = (typeof response.getHeaders === 'function') ? response.getHeaders() : response._headers
+    let headers = (typeof response.getHeaders === 'function') ? response.getHeaders() : response._headers
     Object.assign(headers, cacheObject.headers || {}, {
       'apicache-store': store.type,
       'apicache-version': pkg.version
@@ -165,7 +168,7 @@ function ApiCache () {
     // unstringify buffers
     let data = cacheObject.data
     if (data && data.type === 'Buffer') {
-      data = utils.alloc(data.data)
+      data = utils.toBuffer(data.data)
     }
 
     response.writeHead(cacheObject.status || 200, headers)
@@ -236,7 +239,7 @@ function ApiCache () {
       utils.debug('clearing entire index')
       store.clear(index.all)
         .then(() => {
-          this.resetIndex()
+          instance.resetIndex()
         })
         .then(resolve)
         .catch(reject)
@@ -338,9 +341,8 @@ function ApiCache () {
       // attempt cache hit
       store.get(key)
         .then((entry) => {
-          if (entry && entry.value) {
-            const elapsed = new Date() - req.apicacheTimer
-            utils.debug('sending cached version of', key, utils.logDuration(elapsed))
+          if (entry) {
+            utils.debug('sending cached version of', key, utils.logDuration(new Date() - req.apicacheTimer))
             return sendCachedResponse(res, entry.value)
           }
           makeResponseCacheable(req, res, next, key, duration, strDuration)
@@ -349,44 +351,44 @@ function ApiCache () {
           utils.debug('empty or missing version of', key, err)
           makeResponseCacheable(req, res, next, key, duration, strDuration)
         })
-
-      cache.options = options
-
-      return cache
     }
 
-    this.options = function (options) {
-      if (options) {
-        Object.assign(globalOptions, options)
-        setup()
-        return this
-      } else {
-        return globalOptions
-      }
-    }
+    cache.options = options
 
-    this.resetIndex = function () {
-      index = {
-        all: [],
-        groups: {}
-      }
-    }
+    return cache
+  }
 
-    this.newInstance = function (config) {
-      const instance = new ApiCache()
-      if (config) {
-        instance.options(config)
-      }
-      return instance
+  this.options = function (options) {
+    if (options) {
+      Object.assign(globalOptions, options)
+      setup()
+      return this
+    } else {
+      return globalOptions
     }
+  }
 
-    this.clone = function () {
-      return this.newInstance(this.options())
+  this.resetIndex = function () {
+    index = {
+      all: [],
+      groups: {}
     }
+  }
+
+  this.newInstance = function (config) {
+    const instance = new ApiCache()
+    if (config) {
+      instance.options(config)
+    }
+    return instance
+  }
+
+  this.clone = function () {
+    return this.newInstance(this.options())
+  }
 
     // initialize index
-    this.resetIndex()
-  }
+  this.resetIndex()
 }
 
 module.exports = new ApiCache()

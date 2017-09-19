@@ -1,6 +1,6 @@
 'use strict'
 
-const Storage = require('./Storage')
+const Storage = require('./interface')
 const utils = require('../utils')
 
 const async = require('async')
@@ -12,7 +12,7 @@ class Redis extends Storage {
 
     if (!options.client) {
       utils.debug('[apicache] error in redis init')
-      throw Error(options.client + ' is not a valid Redis client')
+      // throw Error(options.client + ' is not a valid Redis client')
     }
     this.client = options.client
   }
@@ -20,15 +20,23 @@ class Redis extends Storage {
   get (key) {
     const _this = this
     return new Promise((resolve, reject) => {
-      _this.client.hgetall(key, (err, entry) => {
-        if (err) {
-          return reject(err)
-        }
-        if (entry) {
-          return resolve(JSON.parse(entry.response))
-        }
-        resolve()
-      })
+      try {
+        _this.client.hgetall(key, (err, entry) => {
+          if (err) {
+            return reject(err)
+          }
+          if (entry) {
+            try {
+              return resolve({value: JSON.parse(entry.response)})
+            } catch (err) {
+              return resolve({value: null})
+            }
+          }
+          resolve()
+        })
+      } catch (err) {
+        return reject(err)
+      }
     })
   }
 
@@ -60,22 +68,29 @@ class Redis extends Storage {
     })
   }
 
+  /**
+   * clear redis keys one by one from internal index to prevent clearing non-apicache entries
+   */
   clear (entries) {
     const _this = this
     return new Promise((resolve, reject) => {
-      // clear redis keys one by one from internal index to prevent clearing non-apicache entries
-      const deletes = []
-      entries.forEach((key) => {
-        deletes.push(_this.client.del(key))
-      })
+      try {
+        const deletes = []
+        entries.forEach((key) => {
+          deletes.push(_this.client.del(key))
+        })
 
-      async.parallel(deletes, (err) => {
-        if (err) {
-          utils.debug('[apicache] error in redis clear')
-          return reject(err)
-        }
-        resolve()
-      })
+        async.parallel(deletes, (err) => {
+          if (err) {
+            utils.debug('[apicache] error in redis clear')
+            return reject(err)
+          }
+          resolve()
+        })
+      } catch (err) {
+        utils.debug('[apicache] error in redis clear - invalid redis client')
+        reject(err)
+      }
     })
   }
 }

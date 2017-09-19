@@ -23,7 +23,11 @@ const utils = {
   },
 
   alloc: function (init) {
-    return !Buffer.alloc ? new Buffer(init) : Buffer.alloc(init)
+    return Buffer.alloc ? Buffer.alloc(init) : new Buffer(init)
+  },
+
+  toBuffer: function (data) {
+    return Buffer.from ? Buffer.from(data) : new Buffer(data)
   }
 }
 

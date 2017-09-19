@@ -1,6 +1,6 @@
 'use strict'
 
-const Storage = require('./Storage')
+const Storage = require('./interface')
 
 class Memory extends Storage {
   constructor () {
