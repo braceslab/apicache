@@ -77,7 +77,7 @@ class Redis extends Storage {
       try {
         const deletes = []
         entries.forEach((key) => {
-          deletes.push(_this.client.del(key))
+          deletes.push((done) => { _this.client.del(key, done) })
         })
 
         async.parallel(deletes, (err) => {

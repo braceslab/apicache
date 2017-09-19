@@ -4,6 +4,7 @@ const url = require('url')
 const pkg = require('../package.json')
 const MemoryStorage = require('./lib/storage/Memory')
 const utils = require('./lib/utils')
+const Promise = require('bluebird')
 
 const t = {
   ms: 1,
