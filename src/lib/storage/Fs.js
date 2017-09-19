@@ -1,8 +1,9 @@
 'use strict'
 
-const Storage = require('./interface')
+const Promise = require('bluebird')
 const log = require('log-segment')
 const fs = require('fs-extra')
+const Storage = require('./interface')
 
 log.set({
   segments: {
@@ -16,18 +17,37 @@ class Fs extends Storage {
   constructor (options) {
     super()
     this.type = 'fs'
+    this.options = options
+    this.index = {}
 
     if (!options.cwd) {
       log.error('apicache-fs', 'constructor', 'missing options: cwd')
       throw Error(options.cwd + ' is not a valid path')
     }
-    // init
-    fs.ensureDir(options.cwd)
-    if (options.resume) {
-      // load index
-    }
 
-    this.options = options
+    this.setup()
+  }
+
+  setup () {
+    const _this = this
+    return new Promise((resolve, reject) => {
+      // init
+      fs.ensureDir(_this.options.cwd)
+        .then(() => {
+          if (_this.options.resume) {
+            return _this.resume()
+          }
+        })
+        .then(resolve)
+        .catch(reject)
+    })
+  }
+
+  resume () {
+    return new Promise((resolve, reject) => {
+      // load index file
+      fs.readFile(path.join())
+    })
   }
 
   /**

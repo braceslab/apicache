@@ -1,10 +1,10 @@
 'use strict'
 
 const url = require('url')
+const Promise = require('bluebird')
 const pkg = require('../package.json')
 const MemoryStorage = require('./lib/storage/Memory')
 const utils = require('./lib/utils')
-const Promise = require('bluebird')
 
 const t = {
   ms: 1,
@@ -346,10 +346,11 @@ function ApiCache () {
             utils.debug('sending cached version of', key, utils.logDuration(new Date() - req.apicacheTimer))
             return sendCachedResponse(res, entry.value)
           }
-          makeResponseCacheable(req, res, next, key, duration, strDuration)
         })
         .catch((err) => {
           utils.debug('empty or missing version of', key, err)
+        })
+        .finally(() => {
           makeResponseCacheable(req, res, next, key, duration, strDuration)
         })
     }

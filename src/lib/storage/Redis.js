@@ -1,9 +1,10 @@
 'use strict'
 
+const Promise = require('bluebird')
+const async = require('async')
+
 const Storage = require('./interface')
 const utils = require('../utils')
-
-const async = require('async')
 
 class Redis extends Storage {
   constructor (options) {
@@ -12,7 +13,7 @@ class Redis extends Storage {
 
     if (!options.client) {
       utils.debug('[apicache] error in redis init')
-      // throw Error(options.client + ' is not a valid Redis client')
+      // should throw Error(options.client + ' is not a valid Redis client')
     }
     this.client = options.client
   }

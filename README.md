@@ -72,10 +72,12 @@ import express from 'express'
 import apicache from 'apicache'
 import FsStorage from 'apicache-fs'
 
-let app = express()
+const app = express()
+const fsStore = new FsStorage({cwd: '/path/to/cache', resume: true })  
+fsStore.setup()
 
-let cacheOnFs = apicache
-  .options({ store: new FsStorage({cwd: '/path/to/cache', resume: true }) })
+const cacheOnFs = apicache
+  .options({ store: fsStore })
   .middleware
 
 app.get('/will-be-cached', cacheOnFs('5 minutes'), (req, res) => {
