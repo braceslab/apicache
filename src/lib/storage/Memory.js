@@ -1,27 +1,26 @@
-'use strict';
+'use strict'
 
-class MemoryCache {
-  constructor() {
+const Storage = require('./Storage')
+const utils = require('../utils')
+
+class Memory extends Storage {
+  super () {
     this.cache = new Map()
   }
 
-  get(key) {
+  get (key) {
+    // @todo promise
     return this.cache.get(key)
   }
 
-  getValue(key) {
-    let entry = this.get(key)
-
-    return entry && entry.value
-  }
-
-  set(key, value, time, timeoutCallback) {
+  set (key, value, time, timeoutCallback) {
+    // @todo promise
     let instance = this
 
     let entry = {
       value: value,
       expire: time + Date.now(),
-      timeout: setTimeout(function() {
+      timeout: setTimeout(() => {
         instance.delete(key)
         return timeoutCallback && typeof timeoutCallback === 'function' && timeoutCallback(value, key)
       }, time)
@@ -32,7 +31,8 @@ class MemoryCache {
     return entry
   }
 
-  delete(key) {
+  delete (key) {
+    // @todo promise
     let entry = this.cache.get(key)
 
     // clear existing timeout for entry, if exists
@@ -43,11 +43,12 @@ class MemoryCache {
     return this
   }
 
-  clear() {
+  clear (entries) {
+    // @todo promise
     this.cache.forEach(key => this.delete(key))
 
     return this
   }
 }
 
-module.exports = MemoryCache
+module.exports = Memory
