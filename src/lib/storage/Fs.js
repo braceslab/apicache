@@ -71,9 +71,10 @@ class Fs extends Storage {
     return new Promise((resolve, reject) => {
       _this.index = {}
       let _files
-      fs.readdir(path.join(_this.options.cwd, 'index'))
+      let _dir = path.join(_this.options.cwd, 'index')
+      fs.readdir(_dir)
         .then((files) => {
-          _files = files
+          _files = files.map(file => path.join(_dir, file))
           const _tasks = []
           _files.forEach((file, i) => {
             _tasks.push(fs.stat(file))

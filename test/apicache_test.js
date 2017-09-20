@@ -753,7 +753,6 @@ describe('Fs support', function () {
               .expect(200, movies)
               .expect('apicache-store', 'fs')
               .expect('apicache-version', pkg.version)
-              .then(assertNumRequestsProcessed(app, 1))
           })
       })
 
