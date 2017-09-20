@@ -162,7 +162,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'test' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
-        events: { expire: undefined },
         headers: {}
       })
       expect(middleware2.options()).to.eql({
@@ -172,7 +171,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'test' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
-        events: { expire: undefined },
         headers: {}
       })
     })
@@ -186,7 +184,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         defaultDuration: 7200000,
         appendKey: ['bar'],
         statusCodes: { include: [], exclude: ['400'] },
-        events: { expire: undefined },
         headers: {
           'cache-control': 'no-cache'
         }
@@ -195,8 +192,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         debug: false,
         defaultDuration: 1800000,
         appendKey: ['foo'],
-        statusCodes: { include: [], exclude: ['200'] },
-        events: { expire: undefined }
+        statusCodes: { include: [], exclude: ['200'] }
       })
       expect(middleware1.options()).to.eql({
         debug: true,
@@ -205,7 +201,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'bar' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['400'] },
-        events: { expire: undefined },
         headers: {
           'cache-control': 'no-cache'
         }
@@ -217,7 +212,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['200'] },
-        events: { expire: undefined },
         headers: {}
       })
     })
@@ -246,7 +240,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['400'] },
-        events: { expire: undefined },
         headers: {}
       })
       expect(middleware2.options()).to.eql({
@@ -256,7 +249,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['200'] },
-        events: { expire: undefined },
         headers: {}
       })
     })
@@ -294,7 +286,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
-        events: { expire: undefined },
         headers: {
           'cache-control': 'no-cache'
         }
@@ -306,7 +297,6 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
-        events: { expire: undefined },
         headers: {}
       })
     })
@@ -579,27 +569,6 @@ describe('.middleware {MIDDLEWARE}', function () {
           done()
         }, 25)
       })
-
-      it('executes expiration callback from globalOptions.events.expire upon entry expiration', function (done) {
-        var callbackResponse
-        var cb = function (a, b) {
-          callbackResponse = b
-        }
-        var app = mockAPI.create(10, { events: { expire: cb }})
-
-        request(app)
-          .get('/api/movies')
-          .end(function (err, res) {
-            expect(app.apicache.getIndex().all.length).to.equal(1)
-            expect(app.apicache.getIndex().all).to.include('/api/movies')
-          })
-
-        setTimeout(function () {
-          expect(app.apicache.getIndex().all).to.have.length(0)
-          expect(callbackResponse).to.equal('/api/movies')
-          done()
-        }, 25)
-      })
     })
   })
 })
@@ -744,6 +713,7 @@ describe('Fs support', function () {
       })
 
       it('can resume', function () {
+console.log('can resume')
         const store = new FsStore({cwd: fsOptions.cwd, resume: true})
         var app = mockAPI.create('10 seconds', {store: store})
 
@@ -758,6 +728,7 @@ describe('Fs support', function () {
       })
 
       it('sends a response even if store failure', function () {
+console.log('sends a response even if store failure')        
         const store = new FsStore({cwd: fsOptions.cwd, resume: true})
         const app = mockAPI.create('10 seconds', {store: store})
 

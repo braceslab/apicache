@@ -47,13 +47,15 @@ class Redis extends Store {
     })
   }
 
-  set (key, content, duration, expireCallback) {
+  set (key, content, duration) {
     const _this = this
     return new Promise((resolve, reject) => {
       try {
         _this.client.hset(key, 'response', JSON.stringify(content))
         _this.client.hset(key, 'duration', duration)
-        _this.client.expire(key, duration / 1000, expireCallback)
+        _this.client.expire(key, duration / 1000, () => {
+          // @todo emit on delete
+        })
         resolve()
       } catch (err) {
         utils.debug('error in redis.hset()')
@@ -85,7 +87,8 @@ class Redis extends Store {
         const deletes = []
         entries.forEach((key) => {
           deletes.push((done) => {
-            _this.client.del(key, done)})
+            _this.client.del(key, done) 
+})
         })
 
         async.parallel(deletes, (err) => {

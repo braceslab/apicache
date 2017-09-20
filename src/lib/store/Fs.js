@@ -1,5 +1,24 @@
 'use strict'
 
+/*
+log-segment instead of debug function (merge debug function into log segment)
+
+@todo
+delete exipired entries
+get/set buffer base64
+log-segment chrono in fs store
+
+set (key, content, duration, expireCallback) => options.events.expire > move to emitter
+  kept in Memory and Redis for retrocompatibility, move out in 2.x?
+  event to emit: on set, on delete, on clear (on get?)
+  on memory and redis
+
+clear() no entries => see redis
+
+doc store interface
+doc events, api, example use
+*/
+
 const Promise = require('bluebird')
 const log = require('log-segment')
 const fs = require('fs-extra')
@@ -7,6 +26,7 @@ const uuid = require('uuid/v4')
 const path = require('path')
 const EventEmitter = require('events')
 
+const utils = require('../utils')
 const Store = require('./interface')
 
 log.set({
@@ -181,6 +201,9 @@ class Fs extends Store {
 
       fs.readJson(path.join(_this.options.cwd, id))
         .then((content) => {
+          // content.data = utils.toBuffer(content.data64, 'base64')
+          // delete content.data64
+
           _this.store[id] = entry(content, _this.index[key].expire)
           log.success('apicache-fs', 'get', log.v('key', key), 'from fs')
           resolve(_this.store[id])
@@ -212,6 +235,10 @@ class Fs extends Store {
       _this.index[key] = index(key, _expire)
       const id = _this.index[key].id
       _this.store[id] = entry(content, _expire)
+
+      // const copy = { ... content}
+      // copy.data64 = copy.data.toString('base64')
+      // delete copy.data
 
       Promise.all([
         fs.writeJson(path.join(_this.options.cwd, id), content),
@@ -306,20 +333,3 @@ class Fs extends Store {
 }
 
 module.exports = Fs
-
-/*
-log-segment instead of debug function (merge debug function into log segment)
-
-@todo
-delete exipired entries
-get/set buffer base64
-log-segment chrono in fs store
-set (key, content, duration, expireCallback) => options.events.expire > move to emitter
-  kept in Memory and Redis for retrocompatibility, move out in 2.x?
-  event to emit: on set, on delete, on clear (on get?)
-
-clear() no entries => see redis
-
-doc store interface
-doc events, api, example use
-*/

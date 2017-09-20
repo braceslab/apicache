@@ -13,10 +13,11 @@ class Memory extends Store {
   get (key) {
     return new Promise((resolve) => {
       resolve(this.cache.get(key))
+      // @todo emit get event
     })
   }
 
-  set (key, content, duration, expireCallback) {
+  set (key, content, duration) {
     return new Promise((resolve) => {
       let instance = this
 
@@ -25,24 +26,25 @@ class Memory extends Store {
         expire: duration + Date.now(),
         timeout: setTimeout(() => {
           instance.delete(key)
-          return expireCallback && typeof expireCallback === 'function' && expireCallback(content, key)
         }, duration)
       }
 
       this.cache.set(key, entry)
       resolve()
+      // @todo emit set event
     })
   }
 
   delete (key) {
     return new Promise((resolve) => {
-      let entry = this.cache.get(key)
+      const entry = this.cache.get(key)
       // clear existing timeout for entry, if exists
       if (entry) {
         clearTimeout(entry.timeout)
       }
       this.cache.delete(key)
       resolve()
+      // @todo emit delete event
     })
   }
 
@@ -50,6 +52,7 @@ class Memory extends Store {
     return new Promise((resolve) => {
       this.cache.forEach(key => this.delete(key))
       resolve()
+      // @todo emit clear event
     })
   }
 }

@@ -35,9 +35,6 @@ function ApiCache () {
       include: [],
       exclude: []
     },
-    events: {
-      'expire': undefined
-    },
     headers: {
       // 'cache-control':  'no-cache' // example of header overwrite
     }
@@ -81,7 +78,7 @@ function ApiCache () {
   }
 
   function cacheResponse (key, content, duration) {
-    store.set(key, content, duration, globalOptions.events.expire)
+    store.set(key, content, duration)
       .then(() => {
         // add automatic cache clearing from duration, includes max limit on setTimeout
         setTimeout(function () {

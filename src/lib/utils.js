@@ -26,8 +26,8 @@ const utils = {
     return Buffer.alloc ? Buffer.alloc(init) : new Buffer(init)
   },
 
-  toBuffer: function (data) {
-    return Buffer.from ? Buffer.from(data) : new Buffer(data)
+  toBuffer: function (data, encode) {
+    return Buffer.from ? Buffer.from(data, encode) : new Buffer(data, encode)
   }
 }
 
