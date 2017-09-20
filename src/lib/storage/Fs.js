@@ -32,12 +32,26 @@ function entry (value, expire) {
   }
 }
 
+/**
+ * @param {Object} options
+ * @param {!string} options.cwd
+ * @param {?boolean} [options.debug=false]
+ * @param {?boolean} [options.resume=false]
+ */
 class Fs extends Storage {
   constructor (options) {
     super()
     this.type = 'fs'
     this.index = {}
     this.store = {}
+
+    if (!options) {
+      options = {}
+    }
+
+    if (!options.debug) {
+      log.set({disabled: {segments: ['apicache-fs']}})
+    }
 
     if (!options.cwd) {
       log.error('apicache-fs', 'constructor', 'missing options: cwd')
