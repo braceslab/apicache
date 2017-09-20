@@ -10,8 +10,8 @@ var b = apicache.clone()
 var c = apicache.clone()
 var movies = require('./api/lib/data.json')
 
-const RedisStorage = require('../src/lib/storage/Redis')
-const FsStorage = require('../src/lib/storage/Fs')
+const RedisStore = require('../src/lib/store/Redis')
+const FsStore = require('../src/lib/store/Fs')
 const fsOptions = {cwd: '/tmp/apicache-test'}
 
 var apis = [
@@ -625,7 +625,7 @@ describe('Redis support', function () {
 
       it('properly caches a request', function () {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
+        var app = mockAPI.create('10 seconds', {store: new RedisStore({client: db})})
 
         return request(app)
           .get('/api/movies')
@@ -650,7 +650,7 @@ describe('Redis support', function () {
 
       it('can clear indexed cache groups', function () {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
+        var app = mockAPI.create('10 seconds', {store: new RedisStore({client: db})})
 
         return request(app)
           .get('/api/testcachegroup')
@@ -669,7 +669,7 @@ describe('Redis support', function () {
 
       it('can clear indexed entries by url/key (non-group)', function () {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
+        var app = mockAPI.create('10 seconds', {store: new RedisStore({client: db})})
 
         return request(app)
           .get('/api/movies')
@@ -686,7 +686,7 @@ describe('Redis support', function () {
 
       it('can clear all entries from index', function () {
         var db = redis.createClient()
-        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: db})})
+        var app = mockAPI.create('10 seconds', {store: new RedisStore({client: db})})
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
         return app.apicache.clear()
@@ -706,7 +706,7 @@ describe('Redis support', function () {
       })
 
       it('sends a response even if redis failure', function () {
-        var app = mockAPI.create('10 seconds', {store: new RedisStorage({client: null})})
+        var app = mockAPI.create('10 seconds', {store: new RedisStore({client: null})})
 
         return request(app)
           .get('/api/movies')
@@ -722,7 +722,7 @@ describe('Fs support', function () {
       var mockAPI = api.server
 
       it('properly caches a request', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd})
+        const store = new FsStore({cwd: fsOptions.cwd})
         const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
@@ -744,7 +744,7 @@ describe('Fs support', function () {
       })
 
       it('can resume', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd, resume: true})
+        const store = new FsStore({cwd: fsOptions.cwd, resume: true})
         var app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
@@ -758,7 +758,7 @@ describe('Fs support', function () {
       })
 
       it('sends a response even if store failure', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd, resume: true})
+        const store = new FsStore({cwd: fsOptions.cwd, resume: true})
         const app = mockAPI.create('10 seconds', {store: store})
 
         return fs.emptyDir(fsOptions.cwd)
@@ -770,7 +770,7 @@ describe('Fs support', function () {
       })
 
       it('can clear indexed cache groups', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd})
+        const store = new FsStore({cwd: fsOptions.cwd})
         const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
@@ -788,7 +788,7 @@ describe('Fs support', function () {
       })
 
       it('can clear indexed entries by url/key (non-group)', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd})
+        const store = new FsStore({cwd: fsOptions.cwd})
         const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
@@ -804,7 +804,7 @@ describe('Fs support', function () {
       })
 
       it('can clear all entries from index', function () {
-        const store = new FsStorage({cwd: fsOptions.cwd})
+        const store = new FsStore({cwd: fsOptions.cwd})
         const app = mockAPI.create('10 seconds', {store: store})
 
         expect(app.apicache.getIndex().all.length).to.equal(0)

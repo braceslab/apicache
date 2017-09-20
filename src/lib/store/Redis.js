@@ -3,10 +3,10 @@
 const Promise = require('bluebird')
 const async = require('async')
 
-const Storage = require('./interface')
+const Store = require('./interface')
 const utils = require('../utils')
 
-class Redis extends Storage {
+class Redis extends Store {
   constructor (options) {
     super()
     this.type = 'redis'

@@ -1,6 +1,6 @@
 'use strict'
 
-class Storage {
+class Store {
   constructor () {
     this.type = 'none'
   }
@@ -16,8 +16,8 @@ class Storage {
    */
   get (key) {
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .get method')
-      reject(new Error('storage.get method to be implemented'))
+      console.log('implement your store .get method')
+      reject(new Error('store.get method to be implemented'))
     })
   }
 
@@ -30,8 +30,8 @@ class Storage {
    */
   set (key, value, duration) {
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .set method')
-      reject(new Error('storage.set method to be implemented'))
+      console.log('implement your store .set method')
+      reject(new Error('store.set method to be implemented'))
     })
   }
 
@@ -42,8 +42,8 @@ class Storage {
    */
   delete (key) {
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .delete method')
-      reject(new Error('storage.delete method to be implemented'))
+      console.log('implement your store .delete method')
+      reject(new Error('store.delete method to be implemented'))
     })
   }
 
@@ -54,10 +54,10 @@ class Storage {
    */
   clear (entries) {
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .clear method')
-      reject(new Error('storage.clear method to be implemented'))
+      console.log('implement your store .clear method')
+      reject(new Error('store.clear method to be implemented'))
     })
   }
 }
 
-module.exports = Storage
+module.exports = Store

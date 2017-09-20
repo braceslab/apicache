@@ -52,13 +52,13 @@ app.get('/will-be-cached', (req, res) => {
 import express from 'express'
 import apicache from 'apicache'
 import redis from 'redis'
-import RedisStorage from 'apicache-redis'
+import RedisStore from 'apicache-redis'
 
 let app = express()
 
-// use redis storage
+// use redis Store
 let cacheWithRedis = apicache
-  .options({ store: new RedisStorage({client: redis.createClient()}) })
+  .options({ store: new RedisStore({client: redis.createClient()}) })
   .middleware
 
 app.get('/will-be-cached', cacheWithRedis('5 minutes'), (req, res) => {
@@ -70,10 +70,10 @@ app.get('/will-be-cached', cacheWithRedis('5 minutes'), (req, res) => {
 ```js
 import express from 'express'
 import apicache from 'apicache'
-import FsStorage from 'apicache-fs'
+import FsStore from 'apicache-fs'
 
 const app = express()
-const fsStore = new FsStorage({cwd: '/path/to/cache', resume: true })  
+const fsStore = new FsStore({cwd: '/path/to/cache', resume: true })  
 
 const cacheOnFs = apicache
   .options({ store: fsStore })

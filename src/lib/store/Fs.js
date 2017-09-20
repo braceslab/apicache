@@ -7,7 +7,7 @@ const uuid = require('uuid/v4')
 const path = require('path')
 const EventEmitter = require('events')
 
-const Storage = require('./interface')
+const Store = require('./interface')
 
 log.set({
   segments: {
@@ -38,7 +38,7 @@ function entry (value, expire) {
  * @param {?boolean} [options.debug=false]
  * @param {?boolean} [options.resume=false]
  */
-class Fs extends Storage {
+class Fs extends Store {
   constructor (options) {
     super()
     this.type = 'fs'
@@ -312,14 +312,14 @@ log-segment instead of debug function (merge debug function into log segment)
 value should be renamed in content
 
 @todo
-test fs
 get/set buffer base64
-log-segment chrono in fs storage
+log-segment chrono in fs store
 set (key, value, duration, expireCallback) => options.events.expire > move to emitter
-  kept in Memory and Redis for retrocompatibility, remove in 2.x?
+  kept in Memory and Redis for retrocompatibility, move out in 2.x?
   event to emit: on set, on delete, on clear (on get?)
+
 clear() no entries => see redis
 
-doc storage interface
-
+doc store interface
+doc events, api, example use
 */

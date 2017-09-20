@@ -3,7 +3,7 @@
 const url = require('url')
 const Promise = require('bluebird')
 const pkg = require('../package.json')
-const MemoryStorage = require('./lib/storage/Memory')
+const MemoryStore = require('./lib/store/Memory')
 const utils = require('./lib/utils')
 
 const t = {
@@ -23,7 +23,7 @@ function ApiCache () {
   const instance = this
   const middlewareOptions = []
   let index
-  let store = new MemoryStorage()
+  let store = new MemoryStore()
 
   const globalOptions = {
     debug: false,

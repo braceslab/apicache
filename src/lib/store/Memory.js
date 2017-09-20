@@ -1,9 +1,9 @@
 'use strict'
 
-const Storage = require('./interface')
+const Store = require('./interface')
 const Promise = require('bluebird')
 
-class Memory extends Storage {
+class Memory extends Store {
   constructor () {
     super()
     this.type = 'memory'
