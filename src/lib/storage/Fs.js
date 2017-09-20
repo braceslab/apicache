@@ -16,18 +16,18 @@ log.set({
   }
 })
 
-function index (key) {
+function index (key, expire) {
   return {
     id: uuid(),
     key: key,
-    expire: null
+    expire: expire || 0
   }
 }
 
 function entry (value, expire) {
   return {
-    value: null,
-    expire: 0
+    value: value,
+    expire: expire || 0
   }
 }
 
@@ -43,9 +43,7 @@ class Fs extends Storage {
       throw Error(options.cwd + ' is not a valid path')
     }
     this.cwd = options.cwd
-    this.options = options.resume
-
-    this.setup()
+    this.options = options
   }
 
   setup () {
@@ -61,7 +59,10 @@ class Fs extends Storage {
           }
         })
         .then(resolve)
-        .catch(reject)
+        .catch((err) => {
+          log.error('apicache-fs', 'setup', log.v('err', err))
+          reject(err)
+        })
     })
   }
 
@@ -70,7 +71,7 @@ class Fs extends Storage {
     return new Promise((resolve, reject) => {
       _this.index = {}
       let _files
-      fs.readDir(path.join(_this.options.cwd, 'index'))
+      fs.readdir(path.join(_this.options.cwd, 'index'))
         .then((files) => {
           _files = files
           const _tasks = []
@@ -94,7 +95,10 @@ class Fs extends Storage {
           })
         })
         .then(resolve)
-        .catch(reject)
+        .catch((err) => {
+          log.error('apicache-fs', 'resume', log.v('err', err))
+          reject(err)
+        })
     })
   }
 
@@ -106,7 +110,7 @@ class Fs extends Storage {
     const _this = this
     return new Promise((resolve, reject) => {
       if (!_this.index[key]) {
-        resolve(entry(null, 0))
+        resolve(null)
         return
       }
 
@@ -116,12 +120,13 @@ class Fs extends Storage {
         return
       }
 
-      fs.readFile(path.join(_this.options.cwd, id))
+      fs.readJson(path.join(_this.options.cwd, id))
         .then((content) => {
           _this.store[id] = entry(content, _this.index[key].expire)
           resolve(_this.store[id])
         })
         .catch((err) => {
+          log.error('apicache-fs', 'get', log.v('err', err))
           reject(err)
         })
     })
@@ -136,16 +141,20 @@ class Fs extends Storage {
   set (key, value, duration) {
     const _this = this
     return new Promise((resolve, reject) => {
-      _this.index[key] = index(key)
+      const _expire = Date.now() + duration
+      _this.index[key] = index(key, _expire)
       const id = _this.index[key].id
-      _this.store[id] = entry(value, Date.now() + duration)
+      _this.store[id] = entry(value, _expire)
 
       Promise.all([
-        fs.writeFile(path.join(_this.options.cwd, id), value),
+        fs.writeJson(path.join(_this.options.cwd, id), value),
         fs.writeJson(path.join(_this.options.cwd, 'index', id), _this.index[key])
       ])
         .then(resolve)
-        .catch(reject)
+        .catch((err) => {
+          log.error('apicache-fs', 'set', log.v('err', err))
+          reject(err)
+        })
     })
   }
 
@@ -170,7 +179,12 @@ class Fs extends Storage {
         fs.remove(path.join(_this.options.cwd, 'index', id))
       ])
         .then(resolve)
-        .catch(reject)
+        .catch((err) => {
+          log.error('apicache-fs', 'delete', log.v('err', err))
+          resolve()
+          // safe
+          // reject(err)
+        })
     })
   }
 
@@ -188,10 +202,12 @@ class Fs extends Storage {
           return fs.ensureDir(path.join(_this.options.cwd, 'index'))
         })
         .then(resolve)
-        .catch(reject)
-
-      console.log('implement your storage .clear method')
-      reject(new Error('storage.clear method to be implemented'))
+        .catch((err) => {
+          log.error('apicache-fs', 'clear', log.v('err', err))
+          resolve()
+          // safe
+          // reject(err)
+        })
     })
   }
 }

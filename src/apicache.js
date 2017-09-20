@@ -346,11 +346,10 @@ function ApiCache () {
             utils.debug('sending cached version of', key, utils.logDuration(new Date() - req.apicacheTimer))
             return sendCachedResponse(res, entry.value)
           }
+          makeResponseCacheable(req, res, next, key, duration, strDuration)
         })
         .catch((err) => {
           utils.debug('empty or missing version of', key, err)
-        })
-        .finally(() => {
           makeResponseCacheable(req, res, next, key, duration, strDuration)
         })
     }

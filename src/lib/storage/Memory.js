@@ -1,6 +1,7 @@
 'use strict'
 
 const Storage = require('./interface')
+const Promise = require('bluebird')
 
 class Memory extends Storage {
   constructor () {
