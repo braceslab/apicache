@@ -3,6 +3,8 @@
 const Promise = require('bluebird')
 const log = require('log-segment')
 const fs = require('fs-extra')
+const path = require('path')
+
 const Storage = require('./interface')
 
 log.set({
@@ -17,13 +19,14 @@ class Fs extends Storage {
   constructor (options) {
     super()
     this.type = 'fs'
-    this.options = options
     this.index = {}
 
     if (!options.cwd) {
       log.error('apicache-fs', 'constructor', 'missing options: cwd')
       throw Error(options.cwd + ' is not a valid path')
     }
+    this.cwd = options.cwd
+    this.options = options.resume
 
     this.setup()
   }
@@ -33,6 +36,9 @@ class Fs extends Storage {
     return new Promise((resolve, reject) => {
       // init
       fs.ensureDir(_this.options.cwd)
+        .then(() => {
+          return fs.ensureDir(path.join(_this.options.cwd, 'index'))
+        })
         .then(() => {
           if (_this.options.resume) {
             return _this.resume()
@@ -44,9 +50,28 @@ class Fs extends Storage {
   }
 
   resume () {
+    const _this = this
     return new Promise((resolve, reject) => {
-      // load index file
-      fs.readFile(path.join())
+      // load index files
+      _this.index = {}
+      fs.readDir(path.join(_this.options.cwd, 'index'))
+        .then((files) => {
+          files.forEach(file => {
+            console.log(file)
+            // @todo if isFile
+            fs.readFile(file)
+              .then((content) => {
+                try {
+                  const _index = JSON.parse(content)
+                  _this.index[_index.key] = _index
+                } catch (e) {
+                  log.warning('apicache-fs', 'resume', 'skip index file', log.v('file', file))
+                }
+              })
+          })
+        })
+        .then(resolve)
+        .catch(reject)
     })
   }
 
