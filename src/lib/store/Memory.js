@@ -16,16 +16,16 @@ class Memory extends Store {
     })
   }
 
-  set (key, value, duration, expireCallback) {
+  set (key, content, duration, expireCallback) {
     return new Promise((resolve) => {
       let instance = this
 
       let entry = {
-        value: value,
+        content: content,
         expire: duration + Date.now(),
         timeout: setTimeout(() => {
           instance.delete(key)
-          return expireCallback && typeof expireCallback === 'function' && expireCallback(value, key)
+          return expireCallback && typeof expireCallback === 'function' && expireCallback(content, key)
         }, duration)
       }
 

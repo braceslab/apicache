@@ -80,8 +80,8 @@ function ApiCache () {
     }
   }
 
-  function cacheResponse (key, value, duration) {
-    store.set(key, value, duration, globalOptions.events.expire)
+  function cacheResponse (key, content, duration) {
+    store.set(key, content, duration, globalOptions.events.expire)
       .then(() => {
         // add automatic cache clearing from duration, includes max limit on setTimeout
         setTimeout(function () {
@@ -344,7 +344,7 @@ function ApiCache () {
         .then((entry) => {
           if (entry) {
             utils.debug('sending cached version of', key, utils.logDuration(new Date() - req.apicacheTimer))
-            return sendCachedResponse(res, entry.value)
+            return sendCachedResponse(res, entry.content)
           }
           makeResponseCacheable(req, res, next, key, duration, strDuration)
         })

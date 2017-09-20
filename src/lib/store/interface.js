@@ -7,9 +7,9 @@ class Store {
 
   /**
    * get method resolve Promise with an entry
-   * entry is an object {value:*, expire:number}
+   * entry is an object {content:*, expire:number}
    * if entry is null means entry was not previously cached
-   * value can be null or empty, means that the content of entry is null
+   * content can be null or empty, means that the content of entry is null
    * expire is number represent millisecond
    * see Memory.get for an example
    * @param {string} key
@@ -25,10 +25,10 @@ class Store {
    * entry to store
    * see Memory.set for an example
    * @param {string} key
-   * @param {*} value
+   * @param {*} content
    * @param {number} duration
    */
-  set (key, value, duration) {
+  set (key, content, duration) {
     return new Promise((resolve, reject) => {
       console.log('implement your store .set method')
       reject(new Error('store.set method to be implemented'))

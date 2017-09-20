@@ -25,9 +25,9 @@ function index (key, expire) {
   }
 }
 
-function entry (value, expire) {
+function entry (content, expire) {
   return {
-    value: value,
+    content: content,
     expire: expire || 0
   }
 }
@@ -199,22 +199,22 @@ class Fs extends Store {
    * policy to discard: add request counter on index, discard less requested
    * @param {string} key
    */
-  set (key, value, duration) {
+  set (key, content, duration) {
     const _this = this
     return new Promise((resolve, reject) => {
       log.info('apicache-fs', 'set', log.v('key', key))
       if (!_this._inited) {
-        _this._wait('set', [key, value, duration], resolve, reject)
+        _this._wait('set', [key, content, duration], resolve, reject)
         return
       }
 
       const _expire = Date.now() + duration
       _this.index[key] = index(key, _expire)
       const id = _this.index[key].id
-      _this.store[id] = entry(value, _expire)
+      _this.store[id] = entry(content, _expire)
 
       Promise.all([
-        fs.writeJson(path.join(_this.options.cwd, id), value),
+        fs.writeJson(path.join(_this.options.cwd, id), content),
         fs.writeJson(path.join(_this.options.cwd, 'index', id), _this.index[key])
       ])
         .then(() => {
@@ -309,12 +309,12 @@ module.exports = Fs
 
 /*
 log-segment instead of debug function (merge debug function into log segment)
-value should be renamed in content
 
 @todo
+delete exipired entries
 get/set buffer base64
 log-segment chrono in fs store
-set (key, value, duration, expireCallback) => options.events.expire > move to emitter
+set (key, content, duration, expireCallback) => options.events.expire > move to emitter
   kept in Memory and Redis for retrocompatibility, move out in 2.x?
   event to emit: on set, on delete, on clear (on get?)
 

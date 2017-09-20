@@ -29,12 +29,12 @@ class Redis extends Store {
           if (entry) {
             try {
               return resolve({
-                value: JSON.parse(entry.response),
+                content: JSON.parse(entry.response),
                 expire: entry.duration
               })
             } catch (err) {
               return resolve({
-                value: null,
+                content: null,
                 expire: 0
               })
             }
@@ -47,11 +47,11 @@ class Redis extends Store {
     })
   }
 
-  set (key, value, duration, expireCallback) {
+  set (key, content, duration, expireCallback) {
     const _this = this
     return new Promise((resolve, reject) => {
       try {
-        _this.client.hset(key, 'response', JSON.stringify(value))
+        _this.client.hset(key, 'response', JSON.stringify(content))
         _this.client.hset(key, 'duration', duration)
         _this.client.expire(key, duration / 1000, expireCallback)
         resolve()
