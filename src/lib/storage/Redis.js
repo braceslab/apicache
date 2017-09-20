@@ -12,8 +12,8 @@ class Redis extends Storage {
     this.type = 'redis'
 
     if (!options.client) {
-      utils.debug('[apicache] error in redis init')
-      // should throw Error(options.client + ' is not a valid Redis client')
+      utils.debug('error in redis init')
+    // should throw Error(options.client + ' is not a valid Redis client')
     }
     this.client = options.client
   }
@@ -28,9 +28,15 @@ class Redis extends Storage {
           }
           if (entry) {
             try {
-              return resolve({value: JSON.parse(entry.response)})
+              return resolve({
+                value: JSON.parse(entry.response),
+                expire: entry.duration
+              })
             } catch (err) {
-              return resolve({value: null})
+              return resolve({
+                value: null,
+                expire: 0
+              })
             }
           }
           resolve()
@@ -50,7 +56,7 @@ class Redis extends Storage {
         _this.client.expire(key, duration / 1000, expireCallback)
         resolve()
       } catch (err) {
-        utils.debug('[apicache] error in redis.hset()')
+        utils.debug('error in redis.hset()')
         reject(err)
       }
     })
@@ -63,7 +69,7 @@ class Redis extends Storage {
         _this.client.del(key)
         resolve()
       } catch (err) {
-        utils.debug('[apicache] error in redis.del("' + key + '"")')
+        utils.debug('error in redis.del("' + key + '"")')
         reject(err)
       }
     })
@@ -78,18 +84,19 @@ class Redis extends Storage {
       try {
         const deletes = []
         entries.forEach((key) => {
-          deletes.push((done) => { _this.client.del(key, done) })
+          deletes.push((done) => {
+            _this.client.del(key, done)})
         })
 
         async.parallel(deletes, (err) => {
           if (err) {
-            utils.debug('[apicache] error in redis clear')
+            utils.debug('error in redis clear')
             return reject(err)
           }
           resolve()
         })
       } catch (err) {
-        utils.debug('[apicache] error in redis clear - invalid redis client')
+        utils.debug('error in redis clear - invalid redis client')
         reject(err)
       }
     })

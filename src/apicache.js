@@ -89,7 +89,7 @@ function ApiCache () {
         }, Math.min(duration, t.max))
       })
       .catch((err) => {
-        utils.debug('[apicache] cacheResponse error', err)
+        utils.debug('cacheResponse error', err)
       })
   }
 

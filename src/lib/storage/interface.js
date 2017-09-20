@@ -5,6 +5,15 @@ class Storage {
     this.type = 'none'
   }
 
+  /**
+   * get method resolve Promise with an entry
+   * entry is an object {value:*, expire:number}
+   * if entry is null means entry was not previously cached
+   * value can be null or empty, means that the content of entry is null
+   * expire is number represent millisecond
+   * see Memory.get for an example
+   * @param {string} key
+   */
   get (key) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .get method')
@@ -12,13 +21,25 @@ class Storage {
     })
   }
 
-  set (key, value, duration, timeoutCallback) {
+  /**
+   * entry to store
+   * see Memory.set for an example
+   * @param {string} key
+   * @param {*} value
+   * @param {number} duration
+   */
+  set (key, value, duration) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .set method')
       reject(new Error('storage.set method to be implemented'))
     })
   }
 
+  /**
+   * entry to delete
+   * see Memory.delete for an example
+   * @param {string} key
+   */
   delete (key) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .delete method')
@@ -26,6 +47,11 @@ class Storage {
     })
   }
 
+  /**
+   * remove all entries
+   * see Memory.clear for an example
+   * @param {string} key
+   */
   clear (entries) {
     return new Promise((resolve, reject) => {
       console.log('implement your storage .clear method')

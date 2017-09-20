@@ -3,6 +3,7 @@
 const Promise = require('bluebird')
 const log = require('log-segment')
 const fs = require('fs-extra')
+const uuid = require('uuid/v4')
 const path = require('path')
 
 const Storage = require('./interface')
@@ -15,11 +16,27 @@ log.set({
   }
 })
 
+function index (key) {
+  return {
+    id: uuid(),
+    key: key,
+    expire: null
+  }
+}
+
+function entry (value, expire) {
+  return {
+    value: null,
+    expire: 0
+  }
+}
+
 class Fs extends Storage {
   constructor (options) {
     super()
     this.type = 'fs'
     this.index = {}
+    this.store = {}
 
     if (!options.cwd) {
       log.error('apicache-fs', 'constructor', 'missing options: cwd')
@@ -34,7 +51,6 @@ class Fs extends Storage {
   setup () {
     const _this = this
     return new Promise((resolve, reject) => {
-      // init
       fs.ensureDir(_this.options.cwd)
         .then(() => {
           return fs.ensureDir(path.join(_this.options.cwd, 'index'))
@@ -52,22 +68,29 @@ class Fs extends Storage {
   resume () {
     const _this = this
     return new Promise((resolve, reject) => {
-      // load index files
       _this.index = {}
+      let _files
       fs.readDir(path.join(_this.options.cwd, 'index'))
         .then((files) => {
-          files.forEach(file => {
-            console.log(file)
-            // @todo if isFile
-            fs.readFile(file)
-              .then((content) => {
-                try {
-                  const _index = JSON.parse(content)
-                  _this.index[_index.key] = _index
-                } catch (e) {
-                  log.warning('apicache-fs', 'resume', 'skip index file', log.v('file', file))
-                }
-              })
+          _files = files
+          const _tasks = []
+          _files.forEach((file, i) => {
+            _tasks.push(fs.stat(file))
+          })
+          return Promise.all(_tasks)
+        })
+        .then((stats) => {
+          const _indexes = []
+          _files.forEach((file, i) => {
+            if (stats[i].isFile()) {
+              _indexes.push(fs.readJson(file))
+            }
+          })
+          return Promise.all(_indexes)
+        })
+        .then((contents) => {
+          contents.forEach((content) => {
+            _this.index[content.key] = content
           })
         })
         .then(resolve)
@@ -80,20 +103,49 @@ class Fs extends Storage {
    * @param {string} key
    */
   get (key) {
+    const _this = this
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .get method')
-      reject(new Error('storage.get method to be implemented'))
+      if (!_this.index[key]) {
+        resolve(entry(null, 0))
+        return
+      }
+
+      const id = _this.index[key].id
+      if (_this.store[id]) {
+        resolve(_this.store[id])
+        return
+      }
+
+      fs.readFile(path.join(_this.options.cwd, id))
+        .then((content) => {
+          _this.store[id] = entry(content, _this.index[key].expire)
+          resolve(_this.store[id])
+        })
+        .catch((err) => {
+          reject(err)
+        })
     })
   }
 
   /**
    * write content
+   * @todo set store size limit, if exceed discard some entries from .store - will be read from fs
+   * policy to discard: add request counter on index, discard less requested
    * @param {string} key
    */
-  set (key, value, duration, expireCallback) {
+  set (key, value, duration) {
+    const _this = this
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .set method')
-      reject(new Error('storage.set method to be implemented'))
+      _this.index[key] = index(key)
+      const id = _this.index[key].id
+      _this.store[id] = entry(value, Date.now() + duration)
+
+      Promise.all([
+        fs.writeFile(path.join(_this.options.cwd, id), value),
+        fs.writeJson(path.join(_this.options.cwd, 'index', id), _this.index[key])
+      ])
+        .then(resolve)
+        .catch(reject)
     })
   }
 
@@ -102,9 +154,23 @@ class Fs extends Storage {
    * @param {string} key
    */
   delete (key) {
+    const _this = this
     return new Promise((resolve, reject) => {
-      console.log('implement your storage .delete method')
-      reject(new Error('storage.delete method to be implemented'))
+      if (!_this.index[key]) {
+        resolve()
+        return
+      }
+
+      const id = _this.index[key].id
+      delete _this.index[key]
+      delete _this.store[id]
+
+      Promise.all([
+        fs.remove(path.join(_this.options.cwd, id)),
+        fs.remove(path.join(_this.options.cwd, 'index', id))
+      ])
+        .then(resolve)
+        .catch(reject)
     })
   }
 
@@ -112,7 +178,18 @@ class Fs extends Storage {
    * remove all - drop dir
    */
   clear (entries) {
+    const _this = this
     return new Promise((resolve, reject) => {
+      _this.index = {}
+      _this.store = {}
+
+      fs.emptyDir(_this.options.cwd)
+        .then(() => {
+          return fs.ensureDir(path.join(_this.options.cwd, 'index'))
+        })
+        .then(resolve)
+        .catch(reject)
+
       console.log('implement your storage .clear method')
       reject(new Error('storage.clear method to be implemented'))
     })
@@ -122,18 +199,17 @@ class Fs extends Storage {
 module.exports = Fs
 
 /*
-promised Storage
-  no chain for clear and delete
-refactor var => const, let
-use standardjs style
 log-segment instead of debug function (merge debug function into log segment)
-async lib for redis client
+removed getValue
+value should be renamed in content
 
 @todo
-doc api:
-  options: redisClient => storage.type, client ...
-  fs options: cwd, resume
+test fs
+log-segment chrono in fs storage
+set (key, value, duration, expireCallback) => options.events.expire > move to emitter
+  kept in Memory and Redis for retrocompatibility, remove in 2.x?
+  event to emit: on set, on delete, on clear (on get?)
 
-tests
-test redis
+doc storage interface
+
 */
