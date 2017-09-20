@@ -74,7 +74,6 @@ import FsStorage from 'apicache-fs'
 
 const app = express()
 const fsStore = new FsStorage({cwd: '/path/to/cache', resume: true })  
-fsStore.setup()
 
 const cacheOnFs = apicache
   .options({ store: fsStore })

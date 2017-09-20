@@ -581,7 +581,7 @@ describe('.middleware {MIDDLEWARE}', function () {
       })
 
       it('executes expiration callback from globalOptions.events.expire upon entry expiration', function (done) {
-        var callbackResponse = undefined
+        var callbackResponse
         var cb = function (a, b) {
           callbackResponse = b
         }
@@ -722,7 +722,8 @@ describe('Fs support', function () {
       var mockAPI = api.server
 
       it('properly caches a request', function () {
-        var app = mockAPI.create('10 seconds', {store: new FsStorage({cwd: fsOptions.cwd})})
+        const store = new FsStorage({cwd: fsOptions.cwd})
+        const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
           .get('/api/movies')
@@ -738,42 +739,39 @@ describe('Fs support', function () {
               .expect(200, movies)
               .expect('apicache-store', 'fs')
               .expect('apicache-version', pkg.version)
-              .then(assertNumRequestsProcessed(app, 1))
           })
+          .then(assertNumRequestsProcessed(app, 1))
       })
 
       it('can resume', function () {
         const store = new FsStorage({cwd: fsOptions.cwd, resume: true})
-        return store.setup()
-          .then(() => {
-            var app = mockAPI.create('10 seconds', {store: store})
+        var app = mockAPI.create('10 seconds', {store: store})
 
-            return request(app)
-              .get('/api/movies')
-              .expect(200, movies)
-              .expect('apicache-store', 'fs')
-              .expect('apicache-version', pkg.version)
+        return request(app)
+          .get('/api/movies')
+          .expect(200, movies)
+          .expect('apicache-store', 'fs')
+          .expect('apicache-version', pkg.version)
+          .then(function (res) {
+            expect(app.requestsProcessed).to.equal(0)
           })
       })
 
       it('sends a response even if store failure', function () {
         const store = new FsStorage({cwd: fsOptions.cwd, resume: true})
-        let app
-        return store.setup()
+        const app = mockAPI.create('10 seconds', {store: store})
+
+        return fs.emptyDir(fsOptions.cwd)
           .then(() => {
-            app = mockAPI.create('10 seconds', {store: store})
-            
-            return fs.emptyDir(fsOptions.cwd)
-          })
-          .then(() => {
-            return request(app)
+            request(app)
               .get('/api/movies')
               .expect(200, movies)
           })
       })
 
       it('can clear indexed cache groups', function () {
-        var app = mockAPI.create('10 seconds', {store: new FsStorage({cwd: fsOptions.cwd})})
+        const store = new FsStorage({cwd: fsOptions.cwd})
+        const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
           .get('/api/testcachegroup')
@@ -790,7 +788,8 @@ describe('Fs support', function () {
       })
 
       it('can clear indexed entries by url/key (non-group)', function () {
-        var app = mockAPI.create('10 seconds', {store: new FsStorage({cwd: fsOptions.cwd})})
+        const store = new FsStorage({cwd: fsOptions.cwd})
+        const app = mockAPI.create('10 seconds', {store: store})
 
         return request(app)
           .get('/api/movies')
@@ -805,7 +804,8 @@ describe('Fs support', function () {
       })
 
       it('can clear all entries from index', function () {
-        var app = mockAPI.create('10 seconds', {store: new FsStorage({cwd: fsOptions.cwd})})
+        const store = new FsStorage({cwd: fsOptions.cwd})
+        const app = mockAPI.create('10 seconds', {store: store})
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
         return app.apicache.clear()
