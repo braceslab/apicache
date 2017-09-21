@@ -1,8 +1,6 @@
 'use strict'
 
 /*
-kevin: events
-
 log-segment instead of debug function (merge debug function into log segment)
 
 @todo
