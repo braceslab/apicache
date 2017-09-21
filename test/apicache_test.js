@@ -162,6 +162,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'test' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
       expect(middleware2.options()).to.eql({
@@ -171,6 +172,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'test' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
     })
@@ -201,6 +203,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'bar' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['400'] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {
           'cache-control': 'no-cache'
         }
@@ -212,6 +215,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['200'] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
     })
@@ -240,6 +244,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['400'] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
       expect(middleware2.options()).to.eql({
@@ -249,6 +254,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: ['200'] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
     })
@@ -286,6 +292,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {
           'cache-control': 'no-cache'
         }
@@ -297,6 +304,7 @@ describe('.middleware {MIDDLEWARE}', function () {
         appendKey: [ 'foo' ],
         jsonp: false,
         statusCodes: { include: [], exclude: [] },
+        events: {save: null, read: null, expire: null, clear: null},
         headers: {}
       })
     })
@@ -692,7 +700,15 @@ describe('Fs support', function () {
 
       it('properly caches a request', function () {
         const store = new FsStore({cwd: fsOptions.cwd})
-        const app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: () => console.log('read'),
+            save: () => console.log('read'),
+            expire: () => console.log('expire'),
+            clear: () => console.log('clear')
+          }
+        })
 
         return request(app)
           .get('/api/movies')
@@ -714,7 +730,15 @@ describe('Fs support', function () {
 
       it('can resume', function () {
         const store = new FsStore({cwd: fsOptions.cwd, resume: true})
-        var app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('read', k),
+            expire: (k) => console.log('expire', k),
+            clear: () => console.log('clear')
+          }
+        })
 
         return request(app)
           .get('/api/movies')
@@ -725,10 +749,18 @@ describe('Fs support', function () {
             expect(app.requestsProcessed).to.equal(0)
           })
       })
-/*
+
       it('sends a response even if store failure', function () {
         const store = new FsStore({cwd: fsOptions.cwd, resume: true})
-        const app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: () => console.log('read'),
+            save: () => console.log('read'),
+            expire: () => console.log('expire'),
+            clear: () => console.log('clear')
+          }
+        })
 
         return fs.emptyDir(fsOptions.cwd)
           .then(() => {
@@ -740,7 +772,15 @@ describe('Fs support', function () {
 
       it('can clear indexed cache groups', function () {
         const store = new FsStore({cwd: fsOptions.cwd})
-        const app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('read', k),
+            expire: (k) => console.log('expire', k),
+            clear: () => console.log('clear')
+          }
+        })
 
         return request(app)
           .get('/api/testcachegroup')
@@ -758,7 +798,15 @@ describe('Fs support', function () {
 
       it('can clear indexed entries by url/key (non-group)', function () {
         const store = new FsStore({cwd: fsOptions.cwd})
-        const app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('read', k),
+            expire: (k) => console.log('expire', k),
+            clear: () => console.log('clear')
+          }
+        })
 
         return request(app)
           .get('/api/movies')
@@ -774,7 +822,15 @@ describe('Fs support', function () {
 
       it('can clear all entries from index', function () {
         const store = new FsStore({cwd: fsOptions.cwd})
-        const app = mockAPI.create('10 seconds', {store: store})
+        const app = mockAPI.create('10 seconds', {
+          store: store,
+          on: {
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('read', k),
+            expire: (k) => console.log('expire', k),
+            clear: () => console.log('clear')
+          }
+        })
 
         expect(app.apicache.getIndex().all.length).to.equal(0)
         return app.apicache.clear()
@@ -788,7 +844,6 @@ describe('Fs support', function () {
             return app.apicache.clear()
           })
       })
-      */
     })
   })
 })

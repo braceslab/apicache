@@ -3,6 +3,7 @@
 const url = require('url')
 const Promise = require('bluebird')
 const pkg = require('../package.json')
+const Store = require('./lib/store/interface')
 const MemoryStore = require('./lib/store/Memory')
 const utils = require('./lib/utils')
 
@@ -34,6 +35,12 @@ function ApiCache () {
     statusCodes: {
       include: [],
       exclude: []
+    },
+    events: {
+      save: null,
+      read: null,
+      expire: null,
+      clear: null
     },
     headers: {
       // 'cache-control':  'no-cache' // example of header overwrite
@@ -184,6 +191,14 @@ function ApiCache () {
 
     if (globalOptions.store) {
       store = globalOptions.store
+    }
+
+    if (globalOptions.on) {
+      for (const event of Store.events) {
+        if (globalOptions.on[event] && typeof globalOptions.on[event] === 'function') {
+          store.emitter.on(event, globalOptions.on[event])
+        }
+      }
     }
   }
 

@@ -6,6 +6,7 @@ log-segment instead of debug function (merge debug function into log segment)
 @todo
 delete exipired entries
 log-segment chrono in fs store
+option emitter
 
 set (key, content, duration, expireCallback) => options.events.expire > move to emitter
   kept in Memory and Redis for retrocompatibility, move out in 2.x?
@@ -79,7 +80,7 @@ class Fs extends Store {
     this.cwd = options.cwd
     this.options = options
 
-    this._emitter = new EventEmitter()
+    this.emitter = new EventEmitter()
     this._inited = false
     this._initing = false
     this._init()
@@ -109,7 +110,7 @@ class Fs extends Store {
           _this._initing = true
           log.success('apicache-fs', 'init')
           resolve()
-          _this._emitter.emit('inited')
+          _this.emitter.emit('inited')
         })
         .catch((err) => {
           log.error('apicache-fs', 'init', log.v('err', err))
@@ -163,7 +164,7 @@ class Fs extends Store {
     const _this = this
     log.warning('apicache-fs', method, 'store not yet inited')
     // not elegant, but Object.observe is not stable
-    this._emitter.once('inited', () => {
+    this.emitter.once('inited', () => {
       _this[method].apply(_this, args)
         .then(resolve)
         .catch(reject)
@@ -189,8 +190,13 @@ class Fs extends Store {
       _this.index[key] = index(key, _expire)
       const id = _this.index[key].id
       _this.store[id] = content
-      const _copy = utils.clone(content)
-      _copy.data = _copy.data.toString('base64')
+      let _copy = content
+      // if restify, data is plain json / string
+      // if express, data is Buffer then store as base64
+      if (_copy.data instanceof Buffer) {
+        _copy = utils.clone(content)
+        _copy.data = _copy.data.toString('base64')
+      }
 
       Promise.all([
         fs.writeJson(path.join(_this.options.cwd, id), _copy),
@@ -199,7 +205,7 @@ class Fs extends Store {
         .then(() => {
           log.success('apicache-fs', 'set', log.v('key', key))
           resolve()
-          _this._emitter.emit('set', key)
+          _this.emitter.emit('save', key)
         })
         .catch((err) => {
           log.error('apicache-fs', 'set', log.v('err', err))
@@ -224,7 +230,7 @@ class Fs extends Store {
       if (!_this.index[key]) {
         log.success('apicache-fs', 'get', log.v('key', key), 'no entry')
         resolve(null)
-        _this._emitter.emit('get', key, false)
+        _this.emitter.emit('read', key)
         return
       }
 
@@ -241,17 +247,21 @@ class Fs extends Store {
       if (_this.store[id]) {
         log.success('apicache-fs', 'getContent', log.v('key', key), 'from memory')
         resolve(entry(_this.store[id], _this.index[key].expire))
-        _this._emitter.emit('get', key, true)
+        _this.emitter.emit('read', key)
         return
       }
 
       fs.readJson(path.join(_this.options.cwd, id))
         .then((content) => {
           _this.store[id] = content
-          _this.store[id].data = utils.toBuffer(_this.store[id].data, 'base64')
+          // if restify, data is plain json
+          // if express, data is Buffer stored in bas64
+          if (_this.store[id].data[0] !== '[') {
+            _this.store[id].data = utils.toBuffer(_this.store[id].data, 'base64')
+          }
           log.success('apicache-fs', 'getContent', log.v('key', key), 'from fs')
           resolve(entry(_this.store[id], _this.index[key].expire))
-          _this._emitter.emit('get', key, true)
+          _this.emitter.emit('read', key)
         })
         .catch((err) => {
           log.error('apicache-fs', 'getContent', log.v('key', key), log.v('err', err))
@@ -276,7 +286,7 @@ class Fs extends Store {
       if (!_this.index[key]) {
         log.success('apicache-fs', 'delete', log.v('key', key), 'no entry')
         resolve()
-        _this._emitter.emit('delete', key)
+        _this.emitter.emit('expire', key)
         return
       }
 
@@ -291,12 +301,12 @@ class Fs extends Store {
       .then(() => {
         log.success('apicache-fs', 'delete', log.v('key', key))
         resolve()
-        _this._emitter.emit('delete', key)
+        _this.emitter.emit('expire', key)
       })
       .catch((err) => {
         log.error('apicache-fs', 'delete', log.v('key', key), log.v('err', err))
         resolve()
-        _this._emitter.emit('delete', key)
+        _this.emitter.emit('expire', key)
           // safe, should be reject(err)
       })
     })
@@ -324,12 +334,12 @@ class Fs extends Store {
         .then(() => {
           log.success('apicache-fs', 'clear')
           resolve()
-          _this._emitter.emit('clear')
+          _this.emitter.emit('clear')
         })
         .catch((err) => {
           log.error('apicache-fs', 'clear', log.v('err', err))
           resolve()
-          _this._emitter.emit('clear')
+          _this.emitter.emit('clear')
           // safe, should be reject(err)
         })
     })

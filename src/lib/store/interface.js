@@ -5,6 +5,8 @@ class Store {
     this.type = 'none'
   }
 
+  static get events () { return ['save', 'read', 'expire', 'clear'] }
+
   /**
    * get method resolve Promise with an entry
    * entry is an object {content:*, expire:number}
