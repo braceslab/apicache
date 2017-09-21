@@ -6,18 +6,19 @@ kevin: events
 log-segment instead of debug function (merge debug function into log segment)
 
 @todo
-delete exipired entries
 log-segment chrono in fs store
 
-set (key, content, duration, expireCallback) => options.events.expire > move to emitter
-  kept in Memory and Redis for retrocompatibility, move out in 2.x?
-  event to emit: on set, on delete, on clear (on get?)
-  on memory and redis
+Redis.clear() no entries => see redis
 
-clear() no entries => see redis
+events in Memory and Redis
 
-doc store interface, events
-doc events, api, example use
+doc
+  store interface, events, howto
+  events, api, example
+
+  changelog
+    options.redisClient > store
+    events
 */
 
 const Promise = require('bluebird')

@@ -94,7 +94,8 @@ const app = express()
 const fsStore = new FsStore({cwd: '/path/to/cache'})  
 
 const cacheOnFs = apicache
-  .options({ store: fsStore,
+  .options({ 
+    store: fsStore,
     on: {
       read: (key) => console.log('read', key),
       save: (key) => console.log('save', key),
