@@ -5,7 +5,6 @@ log-segment instead of debug function (merge debug function into log segment)
 
 @todo
 delete exipired entries
-get/set buffer base64
 log-segment chrono in fs store
 
 set (key, content, duration, expireCallback) => options.events.expire > move to emitter
@@ -172,51 +171,6 @@ class Fs extends Store {
   }
 
   /**
-   * lazy load content
-   * @param {string} key
-   */
-  get (key) {
-    const _this = this
-    return new Promise((resolve, reject) => {
-      log.info('apicache-fs', 'get', log.v('key', key))
-      if (!_this._inited) {
-        _this._wait('get', [key], resolve, reject)
-        return
-      }
-
-      if (!_this.index[key]) {
-        log.success('apicache-fs', 'get', log.v('key', key), 'no entry')
-        resolve(null)
-        _this._emitter.emit('get', key)
-        return
-      }
-
-      const id = _this.index[key].id
-      if (_this.store[id]) {
-        log.success('apicache-fs', 'get', log.v('key', key), 'from memory')
-        resolve(_this.store[id])
-        _this._emitter.emit('get', key)
-        return
-      }
-
-      fs.readJson(path.join(_this.options.cwd, id))
-        .then((content) => {
-          // content.data = utils.toBuffer(content.data64, 'base64')
-          // delete content.data64
-
-          _this.store[id] = entry(content, _this.index[key].expire)
-          log.success('apicache-fs', 'get', log.v('key', key), 'from fs')
-          resolve(_this.store[id])
-          _this._emitter.emit('get', key)
-        })
-        .catch((err) => {
-          log.error('apicache-fs', 'get', log.v('key', key), log.v('err', err))
-          reject(err)
-        })
-    })
-  }
-
-  /**
    * write content
    * @todo set store size limit, if exceed discard some entries from .store - will be read from fs
    * policy to discard: add request counter on index, discard less requested
@@ -234,14 +188,12 @@ class Fs extends Store {
       const _expire = Date.now() + duration
       _this.index[key] = index(key, _expire)
       const id = _this.index[key].id
-      _this.store[id] = entry(content, _expire)
-
-      // const copy = { ... content}
-      // copy.data64 = copy.data.toString('base64')
-      // delete copy.data
+      _this.store[id] = content
+      const _copy = utils.clone(content)
+      _copy.data = _copy.data.toString('base64')
 
       Promise.all([
-        fs.writeJson(path.join(_this.options.cwd, id), content),
+        fs.writeJson(path.join(_this.options.cwd, id), _copy),
         fs.writeJson(path.join(_this.options.cwd, 'index', id), _this.index[key])
       ])
         .then(() => {
@@ -251,6 +203,58 @@ class Fs extends Store {
         })
         .catch((err) => {
           log.error('apicache-fs', 'set', log.v('err', err))
+          reject(err)
+        })
+    })
+  }
+
+  /**
+   * lazy load content
+   * @param {string} key
+   */
+  get (key) {
+    const _this = this
+    return new Promise((resolve, reject) => {
+      log.info('apicache-fs', 'get', log.v('key', key))
+      if (!_this._inited) {
+        _this._wait('get', [key], resolve, reject)
+        return
+      }
+
+      if (!_this.index[key]) {
+        log.success('apicache-fs', 'get', log.v('key', key), 'no entry')
+        resolve(null)
+        _this._emitter.emit('get', key, false)
+        return
+      }
+
+      _this.getEntry(key)
+        .then(resolve)
+        .catch(reject)
+    })
+  }
+
+  getEntry (key) {
+    const _this = this
+    return new Promise((resolve, reject) => {
+      const id = _this.index[key].id
+      if (_this.store[id]) {
+        log.success('apicache-fs', 'getContent', log.v('key', key), 'from memory')
+        resolve(entry(_this.store[id], _this.index[key].expire))
+        _this._emitter.emit('get', key, true)
+        return
+      }
+
+      fs.readJson(path.join(_this.options.cwd, id))
+        .then((content) => {
+          _this.store[id] = content
+          _this.store[id].data = utils.toBuffer(_this.store[id].data, 'base64')
+          log.success('apicache-fs', 'getContent', log.v('key', key), 'from fs')
+          resolve(entry(_this.store[id], _this.index[key].expire))
+          _this._emitter.emit('get', key, true)
+        })
+        .catch((err) => {
+          log.error('apicache-fs', 'getContent', log.v('key', key), log.v('err', err))
           reject(err)
         })
     })

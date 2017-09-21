@@ -28,6 +28,10 @@ const utils = {
 
   toBuffer: function (data, encode) {
     return Buffer.from ? Buffer.from(data, encode) : new Buffer(data, encode)
+  },
+
+  clone: function (o) {
+    return Object.assign({}, o)
   }
 }
 
