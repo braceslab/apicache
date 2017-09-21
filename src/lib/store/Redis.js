@@ -55,6 +55,7 @@ class Redis extends Store {
         _this.client.hset(key, 'duration', duration)
         _this.client.expire(key, duration / 1000, () => {
           // @todo emit on delete
+          _this.delete(key)
         })
         resolve()
       } catch (err) {
@@ -87,8 +88,8 @@ class Redis extends Store {
         const deletes = []
         entries.forEach((key) => {
           deletes.push((done) => {
-            _this.client.del(key, done) 
-})
+            _this.client.del(key, done)
+          })
         })
 
         async.parallel(deletes, (err) => {

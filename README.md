@@ -84,6 +84,31 @@ app.get('/will-be-cached', cacheOnFs('5 minutes'), (req, res) => {
 })
 ```
 
+#### Events
+```js
+import express from 'express'
+import apicache from 'apicache'
+import FsStore from 'apicache-fs'
+
+const app = express()
+const fsStore = new FsStore({cwd: '/path/to/cache'})  
+
+const cacheOnFs = apicache
+  .options({ store: fsStore,
+    on: {
+      read: (key) => console.log('read', key),
+      save: (key) => console.log('save', key),
+      expire: (key) => console.log('expire', key),
+      clear: () => console.log('clear')
+    }
+  })
+  .middleware
+
+app.get('/will-be-cached', cacheOnFs('5 minutes'), (req, res) => {
+  res.json({ success: true })
+})
+```
+
 #### Cache grouping and manual controls
 ```js
 import apicache from 'apicache'

@@ -20,15 +20,13 @@ class Memory extends Store {
   set (key, content, duration) {
     return new Promise((resolve) => {
       let instance = this
-
       let entry = {
         content: content,
         expire: duration + Date.now(),
-        timeout: setTimeout(() => {
+        timeout: setTimeout(function () {
           instance.delete(key)
-        }, duration)
+        }, Math.min(duration, Store.MAX_TIMEOUT))
       }
-
       this.cache.set(key, entry)
       resolve()
       // @todo emit set event

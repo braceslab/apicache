@@ -14,8 +14,7 @@ const t = {
   hour: 3600000,
   day: 3600000 * 24,
   week: 3600000 * 24 * 7,
-  month: 3600000 * 24 * 30,
-  max: 2147483647
+  month: 3600000 * 24 * 30
 }
 
 const instances = []
@@ -90,7 +89,7 @@ function ApiCache () {
         // add automatic cache clearing from duration, includes max limit on setTimeout
         setTimeout(function () {
           instance.clear(key, true)
-        }, Math.min(duration, t.max))
+        }, Math.min(duration, Store.MAX_TIMEOUT))
       })
       .catch((err) => {
         utils.debug('cacheResponse error', err)

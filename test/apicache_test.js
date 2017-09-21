@@ -577,6 +577,7 @@ describe('.middleware {MIDDLEWARE}', function () {
           done()
         }, 25)
       })
+      
     })
   })
 })
@@ -600,6 +601,22 @@ describe('Redis support', function () {
     describe(api.name + ' tests', function () {
       var mockAPI = api.server
 
+      it('removes a cache key after expiration', function (done) {
+        var app = mockAPI.create(10)
+
+        request(app)
+          .get('/api/movies')
+          .end(function (err, res) {
+            expect(app.apicache.getIndex().all.length).to.equal(1)
+            expect(app.apicache.getIndex().all).to.include('/api/movies')
+          })
+
+        setTimeout(function () {
+          expect(app.apicache.getIndex().all).to.have.length(0)
+          done()
+        }, 25)
+      })
+      
       it('properly caches a request', function () {
         var db = redis.createClient()
         var app = mockAPI.create('10 seconds', {store: new RedisStore({client: db})})
@@ -700,12 +717,12 @@ describe('Fs support', function () {
 
       it('properly caches a request', function () {
         const store = new FsStore({cwd: fsOptions.cwd})
-        const app = mockAPI.create('10 seconds', {
+        const app = mockAPI.create('1 day', {
           store: store,
           on: {
-            read: () => console.log('read'),
-            save: () => console.log('read'),
-            expire: () => console.log('expire'),
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
+            expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }
         })
@@ -734,7 +751,7 @@ describe('Fs support', function () {
           store: store,
           on: {
             read: (k) => console.log('read', k),
-            save: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
             expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }
@@ -755,9 +772,9 @@ describe('Fs support', function () {
         const app = mockAPI.create('10 seconds', {
           store: store,
           on: {
-            read: () => console.log('read'),
-            save: () => console.log('read'),
-            expire: () => console.log('expire'),
+            read: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
+            expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }
         })
@@ -776,7 +793,7 @@ describe('Fs support', function () {
           store: store,
           on: {
             read: (k) => console.log('read', k),
-            save: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
             expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }
@@ -802,7 +819,7 @@ describe('Fs support', function () {
           store: store,
           on: {
             read: (k) => console.log('read', k),
-            save: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
             expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }
@@ -826,7 +843,7 @@ describe('Fs support', function () {
           store: store,
           on: {
             read: (k) => console.log('read', k),
-            save: (k) => console.log('read', k),
+            save: (k) => console.log('save', k),
             expire: (k) => console.log('expire', k),
             clear: () => console.log('clear')
           }

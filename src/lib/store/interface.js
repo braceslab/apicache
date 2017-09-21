@@ -6,6 +6,7 @@ class Store {
   }
 
   static get events () { return ['save', 'read', 'expire', 'clear'] }
+  static get MAX_TIMEOUT () { return 2147483647 }
 
   /**
    * get method resolve Promise with an entry
