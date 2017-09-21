@@ -1,7 +1,8 @@
 'use strict'
 
-const Store = require('./interface')
 const Promise = require('bluebird')
+
+const Store = require('./interface')
 
 class Memory extends Store {
   constructor () {
@@ -13,7 +14,7 @@ class Memory extends Store {
   get (key) {
     return new Promise((resolve) => {
       resolve(this.cache.get(key))
-      // @todo emit get event
+      this.emitter.emit('read', key)
     })
   }
 
@@ -29,7 +30,7 @@ class Memory extends Store {
       }
       this.cache.set(key, entry)
       resolve()
-      // @todo emit set event
+      this.emitter.emit('save', key)
     })
   }
 
@@ -42,7 +43,7 @@ class Memory extends Store {
       }
       this.cache.delete(key)
       resolve()
-      // @todo emit delete event
+      this.emitter.emit('expire', key)
     })
   }
 
@@ -50,7 +51,7 @@ class Memory extends Store {
     return new Promise((resolve) => {
       this.cache.forEach(key => this.delete(key))
       resolve()
-      // @todo emit clear event
+      this.emitter.emit('clear')
     })
   }
 }

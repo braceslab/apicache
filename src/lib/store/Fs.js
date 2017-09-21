@@ -10,7 +10,9 @@ log-segment chrono in fs store
 
 Redis.clear() no entries => see redis
 
-events in Memory and Redis
+test events (Memory, Redis, fs)
+
+utils.debug in Memory and Redis
 
 doc
   store interface, events, howto
@@ -26,7 +28,6 @@ const log = require('log-segment')
 const fs = require('fs-extra')
 const uuid = require('uuid/v4')
 const path = require('path')
-const EventEmitter = require('events')
 
 const utils = require('../utils')
 const Store = require('./interface')
@@ -82,7 +83,6 @@ class Fs extends Store {
     this.cwd = options.cwd
     this.options = options
 
-    this.emitter = new EventEmitter()
     this._inited = false
     this._initing = false
     this._init()

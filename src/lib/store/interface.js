@@ -1,8 +1,11 @@
 'use strict'
 
+const EventEmitter = require('events')
+
 class Store {
   constructor () {
     this.type = 'none'
+    this.emitter = new EventEmitter()
   }
 
   static get events () { return ['save', 'read', 'expire', 'clear'] }

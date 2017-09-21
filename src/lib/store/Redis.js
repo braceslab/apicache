@@ -28,18 +28,23 @@ class Redis extends Store {
           }
           if (entry) {
             try {
-              return resolve({
+              resolve({
                 content: JSON.parse(entry.response),
                 expire: entry.duration
               })
+              _this.emitter.emit('read', key)
+              return
             } catch (err) {
-              return resolve({
+              resolve({
                 content: null,
                 expire: 0
               })
+              _this.emitter.emit('read', key)
+              return
             }
           }
           resolve()
+          _this.emitter.emit('read', key)
         })
       } catch (err) {
         return reject(err)
@@ -54,10 +59,10 @@ class Redis extends Store {
         _this.client.hset(key, 'response', JSON.stringify(content))
         _this.client.hset(key, 'duration', duration)
         _this.client.expire(key, duration / 1000, () => {
-          // @todo emit on delete
           _this.delete(key)
         })
         resolve()
+        _this.emitter.emit('save', key)
       } catch (err) {
         utils.debug('error in redis.hset()')
         reject(err)
@@ -71,6 +76,7 @@ class Redis extends Store {
       try {
         _this.client.del(key)
         resolve()
+        _this.emitter.emit('expire', key)
       } catch (err) {
         utils.debug('error in redis.del("' + key + '"")')
         reject(err)
@@ -98,6 +104,7 @@ class Redis extends Store {
             return reject(err)
           }
           resolve()
+          _this.emitter.emit('clear')
         })
       } catch (err) {
         utils.debug('error in redis clear - invalid redis client')
