@@ -122,7 +122,7 @@ class Fs extends Store {
   _resume () {
     const _this = this
     return new Promise((resolve, reject) => {
-      log.info('apicache-fs', '_resume')
+      log.info('apicache-fs', '_resume', log.v('cwd', _this.options.cwd))
       _this.index = {}
       let _files
       let _dir = path.join(_this.options.cwd, 'index')
